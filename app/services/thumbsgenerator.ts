@@ -29,6 +29,7 @@ import { base64ToArrayBuffer } from '-/utils/misc';
 import AppConfig from '../config';
 import PlatformIO from '../services/platform-facade';
 import { Pro } from '../pro';
+import Ffmpeg from 'fluent-ffmpeg';
 
 const maxSize = AppConfig.maxThumbSize;
 const bgColor = AppConfig.thumbBgColor;
@@ -96,7 +97,7 @@ export const supportedText = [
   'sql',
   'mhtml'
 ];
-export const supportedVideos = ['ogv', 'mp4', 'webm', 'm4v', 'mkv', 'lrv'];
+export const supportedVideos = ['ogv', 'mp4', 'webm', 'm4v', 'mkv', 'lrv', 'wmv'];
 const maxFileSize = 30 * 1024 * 1024;
 
 function saveThumbnailPromise(filePath, dataURL) {
@@ -231,29 +232,35 @@ export function createThumbnailPromise(
       await PlatformIO.createDirectoryPromise(metaDirectory);
     }
 
-    generateThumbnailPromise(filePath, fileSize)
+    generateThumbnailPromise(filePath, fileSize, thumbFilePath)
       .then(dataURL => {
-        if (dataURL && dataURL.length) {
-          saveThumbnailPromise(thumbFilePath, dataURL)
-            .then(() => resolve(thumbFilePath))
-            .catch(err => {
-              console.warn('Thumb saving failed ' + err + ' for ' + filePath);
-              resolve();
-            });
+        if (!dataURL) {
+          resolve('');
           return true;
         }
-        resolve();
+
+        if (dataURL == 'saved') {
+          resolve(thumbFilePath);
+          return true;
+        }
+
+        saveThumbnailPromise(thumbFilePath, dataURL)
+          .then(() => resolve(thumbFilePath))
+          .catch(err => {
+            console.warn('Thumb saving failed ' + err + ' for ' + filePath);
+            resolve('');
+          });
         return true;
       })
       .catch(err => {
         console.warn('Thumb generation failed ' + err + ' for ' + filePath);
-        resolve();
+        resolve('');
       });
     return true;
   });
 }
 
-export function generateThumbnailPromise(fileURL: string, fileSize: number) {
+export function generateThumbnailPromise(fileURL: string, fileSize: number, thumbFilePath: string) {
   const ext = extractFileExtension(
     fileURL,
     PlatformIO.getDirSeparator()
@@ -294,7 +301,7 @@ export function generateThumbnailPromise(fileURL: string, fileSize: number) {
         maxSize
       );
     }
-    return generateVideoThumbnail(fileURLEscaped);
+    return generateVideoThumbnail(fileURL, thumbFilePath);
   }
   return generateDefaultThumbnail();
 }
@@ -383,45 +390,95 @@ export function generateImageThumbnail(fileURL): Promise<string> {
   });
 }
 
-function generateVideoThumbnail(fileURL): Promise<string> {
+// function generateVideoThumbnail(fileURL): Promise<string> {
+//   return new Promise(resolve => {
+//     let canvas: HTMLCanvasElement = document.createElement('canvas');
+//     const ctx = canvas.getContext('2d');
+//     let img: HTMLImageElement = new Image();
+//     let video: HTMLVideoElement = document.createElement('video');
+//     const captureTime = 1.5; // time in seconds at which to capture the image from the video
+
+//     const errorHandler = err => {
+//       console.warn(
+//         'Error while generating thumbnail for: ' +
+//           fileURL +
+//           ' - ' +
+//           JSON.stringify(err)
+//       );
+//       resolve('');
+//     };
+
+//     video.onloadedmetadata = () => {
+//       video.currentTime = Math.min(Math.max(0, captureTime), video.duration);
+//       if (video.videoWidth >= video.videoHeight) {
+//         canvas.width = maxSize;
+//         canvas.height = (maxSize * video.videoHeight) / video.videoWidth;
+//       } else {
+//         canvas.height = maxSize;
+//         canvas.width = (maxSize * video.videoWidth) / video.videoHeight;
+//       }
+//     };
+
+//     video.onseeked = () => {
+//       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+//       const dataurl = canvas.toDataURL(AppConfig.thumbType);
+//       img.onerror = errorHandler;
+//       resolve(dataurl);
+//       img = null;
+//       canvas = null;
+//       video = null;
+//     };
+//     video.onerror = errorHandler;
+//     video.src = fileURL;
+//   });
+// }
+
+function generateVideoThumbnail(fileURL, thumbFilePath): Promise<string> {
   return new Promise(resolve => {
-    let canvas: HTMLCanvasElement = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    let img: HTMLImageElement = new Image();
-    let video: HTMLVideoElement = document.createElement('video');
-    const captureTime = 1.5; // time in seconds at which to capture the image from the video
+    const thumbnailFolder = extractContainingDirectoryPath(
+      thumbFilePath,
+      PlatformIO.getDirSeparator()
+    );
 
-    const errorHandler = err => {
-      console.warn(
-        'Error while generating thumbnail for: ' +
-          fileURL +
-          ' - ' +
-          JSON.stringify(err)
-      );
-      resolve('');
-    };
+    const thumbnailFileName = extractFileName(thumbFilePath, PlatformIO.getDirSeparator());
 
-    video.onloadedmetadata = () => {
-      video.currentTime = Math.min(Math.max(0, captureTime), video.duration);
-      if (video.videoWidth >= video.videoHeight) {
-        canvas.width = maxSize;
-        canvas.height = (maxSize * video.videoHeight) / video.videoWidth;
-      } else {
-        canvas.height = maxSize;
-        canvas.width = (maxSize * video.videoWidth) / video.videoHeight;
+    const ffmpeg = Ffmpeg(fileURL);
+    ffmpeg.ffprobe((err, meta)=>{
+      if (err) {
+        console.log('Ffmpeg', err.message)
+        resolve('');
+        return;
       }
-    };
 
-    video.onseeked = () => {
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const dataurl = canvas.toDataURL(AppConfig.thumbType);
-      img.onerror = errorHandler;
-      resolve(dataurl);
-      img = null;
-      canvas = null;
-      video = null;
-    };
-    video.onerror = errorHandler;
-    video.src = fileURL;
+      const video = meta.streams.find(stream => stream.codec_type == 'video');
+      let { width, height } = video;
+      if (video.rotation != 0) {
+        [width, height] = [height, width]
+      }
+      let size: string;
+      if (width > height) {
+        size = maxSize + 'x' + Math.floor(maxSize * height / width);
+      } else {
+        size = Math.floor(maxSize * width / height) + 'x' + maxSize;
+      }
+
+      ffmpeg.on('error', (err)=>{
+        console.log('Ffmpeg', err.message)
+        resolve('');
+      })
+      .on('end', ()=>{
+        resolve('saved');
+      })
+      .screenshots({
+        timestamps: ['3%'],
+        filename: escapeFfmpeg(thumbnailFileName),
+        folder: escapeFfmpeg(thumbnailFolder),
+        size
+      });
+    })
   });
+}
+
+function escapeFfmpeg(path: string) {
+  return path.replace('%', '%%')
 }
