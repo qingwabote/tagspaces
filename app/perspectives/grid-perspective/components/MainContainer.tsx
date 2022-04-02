@@ -441,7 +441,8 @@ const GridPerspective = (props: Props) => {
   const openLocation = (fsEntry: TS.FileSystemEntry) => {
     if (fsEntry.isFile) {
       props.setSelectedEntries([fsEntry]);
-      props.openFsEntry(fsEntry);
+      // props.openFsEntry(fsEntry);
+      props.openFileNatively(fsEntry.path);
     } else {
       console.log('Handle Grid cell db click, selected path : ', fsEntry.path);
       props.loadDirectoryContent(fsEntry.path, true);

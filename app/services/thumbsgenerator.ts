@@ -452,7 +452,7 @@ function generateVideoThumbnail(fileURL, thumbFilePath): Promise<string> {
 
       const video = meta.streams.find(stream => stream.codec_type == 'video');
       let { width, height } = video;
-      if (video.rotation != 0) {
+      if (video.rotation) {
         [width, height] = [height, width]
       }
       let size: string;
@@ -470,7 +470,7 @@ function generateVideoThumbnail(fileURL, thumbFilePath): Promise<string> {
         resolve('saved');
       })
       .screenshots({
-        timestamps: ['3%'],
+        timestamps: ['20%'],
         filename: escapeFfmpeg(thumbnailFileName),
         folder: escapeFfmpeg(thumbnailFolder),
         size
