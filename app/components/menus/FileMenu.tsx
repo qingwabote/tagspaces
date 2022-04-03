@@ -22,6 +22,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import Divider from '@material-ui/core/Divider';
+import RegenerateThumb from '@material-ui/icons/Photo';
 import OpenFile from '@material-ui/icons/SubdirectoryArrowRight';
 import OpenFileNatively from '@material-ui/icons/Launch';
 import OpenParentFolder from '@material-ui/icons/FolderOpen';
@@ -51,6 +52,7 @@ import {
 } from '-/utils/paths';
 import { TS } from '-/tagspaces.namespace';
 import { formatDateTime4Tag } from '-/utils/misc';
+import { regenerateThumbnail } from '-/services/thumbsgenerator';
 // import AddIcon from '@material-ui/icons/Add';
 
 interface Props {
@@ -63,6 +65,8 @@ interface Props {
   openRenameFileDialog: () => void;
   openMoveCopyFilesDialog: () => void;
   openAddRemoveTagsDialog: () => void;
+  updateThumbnailUrls: (tmbURLs: Array<any>) => void;
+  setGeneratingThumbnails: (isGeneratingThumbs: boolean) => void;
   openFsEntry: (fsEntry: TS.FileSystemEntry) => void;
   loadDirectoryContent: (path: string, generateThumbnails: boolean) => void;
   openFileNatively: (path: string) => void;
@@ -119,6 +123,25 @@ const FileMenu = (props: Props) => {
           showNotification(i18n.t('core:sharingLinkFailed'));
         });
     }
+  }
+
+  function regenerateThumbnails() {
+    onClose();
+    props.setGeneratingThumbnails(true);
+    const thumbnailPromises = selectedEntries.map(fsEntry => regenerateThumbnail(fsEntry.path, fsEntry.size))
+    Promise.all(thumbnailPromises).then((results)=>{
+      const tmbURLs = [];
+      results.forEach(tmbURL => {
+        if (tmbURL.tmbPath) {
+          tmbURL.tmbPath += '?' + new Date().getTime();
+          tmbURLs.push(tmbURL)
+        }
+      })
+      if (tmbURLs.length > 0) {
+        props.updateThumbnailUrls(tmbURLs);
+      }
+      props.setGeneratingThumbnails(false);
+    })
   }
 
   function showDeleteFileDialog() {
@@ -388,6 +411,19 @@ const FileMenu = (props: Props) => {
     );
   }
 
+  menuItems.push(
+    <MenuItem
+      key="fileMenuRegenerateThumb"
+      data-tid="fileMenuRegenerateThumb"
+      onClick={regenerateThumbnails}
+    >
+      <ListItemIcon>
+        <RegenerateThumb />
+      </ListItemIcon>
+      <ListItemText primary={i18n.t('core:regenerateThumb')} />
+    </MenuItem>
+  );
+  
   return (
     <div style={{ overflowY: 'hidden' }}>
       <Menu

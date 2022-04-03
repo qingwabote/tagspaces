@@ -137,6 +137,7 @@
   "name": "TagSpaces",
   "fileOperations": "文件操作",
   "addRemoveTags": "新增/移除标签",
+  "regenerateThumb": "重新生成缩略图",
   "openFile": "打开文件",
   "downloadFile": "下载",
   "openFileNatively": "用原生应用打开文件",

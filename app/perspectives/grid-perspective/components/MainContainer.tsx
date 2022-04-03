@@ -79,6 +79,8 @@ interface Props {
   selectedEntries: Array<any>;
   supportedFileTypes: Array<any>;
   isReadOnlyMode: boolean;
+  updateThumbnailUrls: (tmbURLs: Array<any>) => void;
+  setGeneratingThumbnails: (isGeneratingThumbs: boolean) => void;
   openFsEntry: (fsEntry?: TS.FileSystemEntry) => void;
   openNextFile: () => any;
   openPrevFile: () => any;
@@ -850,6 +852,8 @@ const GridPerspective = (props: Props) => {
           openRenameFileDialog={props.openRenameEntryDialog}
           openMoveCopyFilesDialog={openMoveCopyFilesDialog}
           openAddRemoveTagsDialog={openAddRemoveTagsDialog}
+          updateThumbnailUrls={props.updateThumbnailUrls}
+          setGeneratingThumbnails={props.setGeneratingThumbnails}
           openFsEntry={props.openFsEntry}
           openFileNatively={props.openFileNatively}
           loadDirectoryContent={props.loadDirectoryContent}
@@ -929,6 +933,8 @@ function mapActionCreatorsToProps(dispatch) {
       moveFiles: IOActions.moveFiles,
       setSelectedEntries: AppActions.setSelectedEntries,
       showNotification: AppActions.showNotification,
+      updateThumbnailUrls: AppActions.updateThumbnailUrls,
+      setGeneratingThumbnails: AppActions.setGeneratingThumbnails,
       openFileNatively: AppActions.openFileNatively,
       openURLExternally: AppActions.openURLExternally,
       openNextFile: AppActions.openNextFile,

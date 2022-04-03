@@ -186,6 +186,14 @@ export function getThumbnailURLPromise(
   });
 }
 
+export async function regenerateThumbnail(
+  filePath: string,
+  fileSize: number,  
+): Promise<{ filePath: string; tmbPath?: string }> {
+    const tmbPath = await createThumbnailPromise(filePath, fileSize, getThumbFileLocation(filePath));
+    return { filePath, tmbPath }
+}
+
 export function replaceThumbnailURLPromise(
   filePath: string,
   thumbFilePath: string
@@ -208,7 +216,7 @@ export function replaceThumbnailURLPromise(
   });
 }
 
-export function createThumbnailPromise(
+function createThumbnailPromise(
   filePath: string,
   fileSize: number,
   thumbFilePath: string
@@ -260,7 +268,7 @@ export function createThumbnailPromise(
   });
 }
 
-export function generateThumbnailPromise(fileURL: string, fileSize: number, thumbFilePath: string) {
+function generateThumbnailPromise(fileURL: string, fileSize: number, thumbFilePath: string) {
   const ext = extractFileExtension(
     fileURL,
     PlatformIO.getDirSeparator()
@@ -470,7 +478,7 @@ function generateVideoThumbnail(fileURL, thumbFilePath): Promise<string> {
         resolve('saved');
       })
       .screenshots({
-        timestamps: ['20%'],
+        timestamps: [ Math.ceil(Math.random() * 60) + 20 + '%'],
         filename: escapeFfmpeg(thumbnailFileName),
         folder: escapeFfmpeg(thumbnailFolder),
         size

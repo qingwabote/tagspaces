@@ -1101,7 +1101,7 @@ export const actions = {
     filePath,
     thumbUrl // + '?' + new Date().getTime()
   }),
-  updateThumbnailUrls: (tmbURLs: Array<any>) => ({
+  updateThumbnailUrls: (tmbURLs: Array<{ filePath: string; tmbPath?: string }>) => ({
     type: types.UPDATE_THUMB_URLS,
     tmbURLs
   }),
