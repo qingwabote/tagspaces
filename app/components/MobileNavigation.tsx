@@ -115,7 +115,7 @@ interface Props {
 
 const MobileNavigation = (props: Props) => {
   const [isProTeaserVisible, setIsProTeaserVisible] = useState<boolean>(false);
-  const [showTeaserBanner, setShowTeaserBanner] = useState<boolean>(true);
+  const [showTeaserBanner, setShowTeaserBanner] = useState<boolean>(false);
   const [anchorUser, setAnchorUser] = useState<HTMLButtonElement | null>(null);
 
   const toggleProTeaser = () => {

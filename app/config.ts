@@ -81,8 +81,9 @@ const AppConfig = {
     window.ExtShowAdvancedSearch !== undefined
       ? window.ExtShowAdvancedSearch
       : true,
-  showSmartTags:
-    window.ExtShowSmartTags !== undefined ? window.ExtShowSmartTags : true,
+  // showSmartTags:
+  //   window.ExtShowSmartTags !== undefined ? window.ExtShowSmartTags : true,
+  showSmartTags: false,
   showWelcomePanel:
     window.ExtShowWelcomePanel !== undefined
       ? window.ExtShowWelcomePanel
