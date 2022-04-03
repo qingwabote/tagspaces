@@ -191,7 +191,7 @@ const EntryContainer = (props: Props) => {
 
   const [isPropertiesPanelVisible, setPropertiesPanelVisible] = useState<
     boolean
-  >(false);
+  >(true);
   const [isFullscreen, setFullscreen] = useState<boolean>(false);
   // eslint-disable-next-line no-unused-vars
   const [ignored, forceUpdate] = useReducer(x => x + 1, 0);
@@ -1016,6 +1016,8 @@ const EntryContainer = (props: Props) => {
     } else {
       initSize = defaultSplitSize; // '0%';
     }
+
+    return toolbarButtons();
 
     return (
       <Split

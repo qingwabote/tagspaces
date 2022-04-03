@@ -1230,61 +1230,6 @@ const EntryProperties = (props: Props) => {
             </ProTooltip>
           </Grid>
         )}
-
-        <Grid item xs={12}>
-          <div className={classes.fluidGrid}>
-            <div className={classes.gridItem}>
-              <Typography
-                variant="caption"
-                className={classNames(classes.header)}
-                style={{ display: 'block' }}
-              >
-                {i18n.t('core:thumbnail')}
-              </Typography>
-            </div>
-            {!isReadOnlyMode &&
-              !currentEntry.editMode &&
-              editName === undefined &&
-              editDescription === undefined && (
-                <ProTooltip tooltip={i18n.t('changeThumbnail')}>
-                  <Button
-                    disabled={!Pro}
-                    color="primary"
-                    className={classes.button}
-                    style={{ whiteSpace: 'nowrap' }}
-                    onClick={toggleThumbFilesDialog}
-                  >
-                    {i18n.t('core:changeThumbnail')}
-                  </Button>
-                </ProTooltip>
-              )}
-          </div>
-          <div className={classes.fluidGrid}>
-            <div
-              className={classes.gridItem}
-              title={i18n.t('core:changeThumbnail')}
-            >
-              {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events */}
-              <div
-                className={classes.header}
-                onClick={toggleThumbFilesDialog}
-                role="button"
-                tabIndex={0}
-                style={{
-                  backgroundSize: 'contain',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundImage: thumbPathUrl,
-                  backgroundPosition: 'center',
-                  minHeight: AppConfig.maxThumbSize,
-                  maxHeight: AppConfig.maxThumbSize,
-                  maxWidth: AppConfig.maxThumbSize,
-                  display: 'block',
-                  marginBottom: 5
-                }}
-              />
-            </div>
-          </div>
-        </Grid>
       </Grid>
       {isMoveCopyFilesDialogOpened && (
         <MoveCopyFilesDialog
