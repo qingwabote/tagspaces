@@ -50,9 +50,11 @@ import IOActions from '-/reducers/io-actions';
 import {
   actions as AppActions,
   getLastSelectedEntry,
+  getOpenedFiles,
   getSelectedEntries,
   isDeleteMultipleEntriesDialogOpened,
-  isReadOnlyMode
+  isReadOnlyMode,
+  OpenedEntry
 } from '-/reducers/app';
 import TaggingActions from '-/reducers/tagging-actions';
 import CellContent from './CellContent';
@@ -79,6 +81,7 @@ interface Props {
   selectedEntries: Array<any>;
   supportedFileTypes: Array<any>;
   isReadOnlyMode: boolean;
+  openedFiles: Array<OpenedEntry>;
   updateThumbnailUrls: (tmbURLs: Array<any>) => void;
   setGeneratingThumbnails: (isGeneratingThumbs: boolean) => void;
   openFsEntry: (fsEntry?: TS.FileSystemEntry) => void;
@@ -350,7 +353,7 @@ const GridPerspective = (props: Props) => {
     } else {
       setSelectedEntries([fsEntry]);
       if (fsEntry.isFile) {
-        if (singleClickAction === 'openInternal') {
+        if (singleClickAction === 'openInternal' || props.openedFiles.length) {
           props.openFsEntry(fsEntry);
         } else if (singleClickAction === 'openExternal') {
           props.openFileNatively(fsEntry.path);
@@ -950,6 +953,7 @@ function mapActionCreatorsToProps(dispatch) {
 
 function mapStateToProps(state) {
   return {
+    openedFiles: getOpenedFiles(state),
     supportedFileTypes: getSupportedFileTypes(state),
     isReadOnlyMode: isReadOnlyMode(state),
     lastSelectedEntry: getLastSelectedEntry(state),

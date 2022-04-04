@@ -316,8 +316,7 @@ export default (state: any = initialState, action: any) => {
       return { ...state, lastSelectedEntry: action.entryPath };
     } */
     case types.SET_SELECTED_ENTRIES: {
-      const openedFiles = state.openedFiles.length && action.selectedEntries.length ? [action.selectedEntries[0]] : state.openedFiles;
-      return { ...state, selectedEntries: action.selectedEntries, openedFiles };
+      return { ...state, selectedEntries: action.selectedEntries };
     }
     case types.SET_CURRENDIRECTORYCOLOR: {
       if (state.currentDirectoryColor !== action.color) {
@@ -1105,7 +1104,7 @@ export const actions = {
     filePath,
     thumbUrl // + '?' + new Date().getTime()
   }),
-  updateThumbnailUrls: (tmbURLs: Array<{ filePath: string; tmbPath?: string }>) => ({
+  updateThumbnailUrls: (tmbURLs: Array<any>) => ({
     type: types.UPDATE_THUMB_URLS,
     tmbURLs
   }),
