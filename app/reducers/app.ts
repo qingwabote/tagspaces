@@ -316,7 +316,7 @@ export default (state: any = initialState, action: any) => {
       return { ...state, lastSelectedEntry: action.entryPath };
     } */
     case types.SET_SELECTED_ENTRIES: {
-      const openedFiles = state.openedFiles.length ? [action.selectedEntries[0]] : state.openedFiles;
+      const openedFiles = state.openedFiles.length && action.selectedEntries.length ? [action.selectedEntries[0]] : state.openedFiles;
       return { ...state, selectedEntries: action.selectedEntries, openedFiles };
     }
     case types.SET_CURRENDIRECTORYCOLOR: {
