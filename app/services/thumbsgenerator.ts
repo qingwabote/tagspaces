@@ -97,7 +97,7 @@ export const supportedText = [
   'sql',
   'mhtml'
 ];
-export const supportedVideos = ['ogv', 'mp4', 'webm', 'm4v', 'mkv', 'lrv', 'wmv'];
+export const supportedVideos = ['ogv', 'mp4', 'webm', 'm4v', 'mkv', 'lrv', 'wmv', 'flv'];
 const maxFileSize = 30 * 1024 * 1024;
 
 function saveThumbnailPromise(filePath, dataURL) {
