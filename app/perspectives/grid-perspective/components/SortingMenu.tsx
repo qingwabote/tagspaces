@@ -41,6 +41,18 @@ const SortingMenu = (props: Props) => {
     <Menu anchorEl={anchorEl} open={open} onClose={onClose}>
       {/* <ListSubHeader>Sort by</ListSubHeader> */}
       <MenuItem
+        data-tid="gridPerspectiveSortByFileName"
+        onClick={() => {
+          handleSortBy('byFileName');
+        }}
+      >
+        <ListItemIcon style={{ minWidth: 25 }}>
+          {sortBy === 'byFileName' &&
+            (orderBy ? <ArrowDownIcon /> : <ArrowUpIcon />)}
+        </ListItemIcon>
+        <ListItemText primary={i18n.t('core:fileName')} />
+      </MenuItem>
+      <MenuItem
         data-tid="gridPerspectiveSortByName"
         onClick={() => {
           handleSortBy('byName');

@@ -606,6 +606,10 @@ export function sortAlphaNum(a: TS.FileSystemEntry, b: TS.FileSystemEntry) {
 }
 
 // Sorting functionality
+function sortByFileName(a: TS.FileSystemEntry, b: TS.FileSystemEntry) {
+  return a.name.localeCompare(b.name);
+}
+
 export function sortByName(a: TS.FileSystemEntry, b: TS.FileSystemEntry) {
   // @ts-ignore
   return !b.isFile - !a.isFile || sortAlphaNum(a, b);
@@ -650,6 +654,11 @@ export function shuffleArray(array: Array<any>) {
 
 export function sortByCriteria(data: any, criteria: string, order: boolean) {
   switch (criteria) {
+    case 'byFileName':
+      if (order) {
+        return data.sort(sortByFileName);
+      }
+      return data.sort((a, b) => -1 * sortByFileName(a, b));
     case 'byName':
       if (order) {
         return data.sort(sortByName);
