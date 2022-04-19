@@ -22,9 +22,9 @@ import ListItemText from '@material-ui/core/ListItemText';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import Divider from '@material-ui/core/Divider';
-import RegenerateThumb from '@material-ui/icons/Photo';
 import OpenFile from '@material-ui/icons/SubdirectoryArrowRight';
 import OpenFileNatively from '@material-ui/icons/Launch';
+import OpenFileBandicut from '@material-ui/icons/Theaters';
 import OpenParentFolder from '@material-ui/icons/FolderOpen';
 import OpenFolderInternally from '@material-ui/icons/Folder';
 import AddRemoveTags from '@material-ui/icons/Loyalty';
@@ -32,6 +32,7 @@ import MoveCopy from '@material-ui/icons/FileCopy';
 import DuplicateFile from '@material-ui/icons/PostAdd';
 import ImageIcon from '@material-ui/icons/Image';
 import ShareIcon from '@material-ui/icons/Link';
+import RegenerateThumb from '@material-ui/icons/Photo';
 import RenameFile from '@material-ui/icons/FormatTextdirectionLToR';
 import DeleteForever from '@material-ui/icons/DeleteForever';
 import i18n from '-/services/i18n';
@@ -70,6 +71,7 @@ interface Props {
   openFsEntry: (fsEntry: TS.FileSystemEntry) => void;
   loadDirectoryContent: (path: string, generateThumbnails: boolean) => void;
   openFileNatively: (path: string) => void;
+  openFileBandicut: (path: string) => void;
   showInFileManager: (path: string) => void;
   showNotification: (
     text: string,
@@ -231,6 +233,13 @@ const FileMenu = (props: Props) => {
     }
   }
 
+  function openFileBandicut() {
+    onClose();
+    if (props.selectedFilePath) {
+      props.openFileBandicut(props.selectedFilePath);
+    }
+  }
+
   function openParentFolderInternally() {
     onClose();
     if (selectedFilePath) {
@@ -304,6 +313,24 @@ const FileMenu = (props: Props) => {
         <ListItemText primary={i18n.t('core:openFileNatively')} />
       </MenuItem>
     );
+    if (
+      //https://www.bandicam.cn/bandicut-video-cutter/support/
+      ["avi","mp4","mov","m4v","mkv","webm","mpeg","mpg","dat","vob","flv","asf","wmv","ts","tp","trp","mpe","mpv2","mp2v","m2t","m2ts","k3g","divx","wm","wmx","wvx","rm","rmvb","ram","ivf","ogm","vp6","xvd"]
+      .includes(selectedEntries[0].extension)
+      ) {
+      menuItems.push(
+        <MenuItem
+          key="fileMenuOpenFileBandicut"
+          data-tid="fileMenuOpenFileBandicut"
+          onClick={openFileBandicut}
+        >
+          <ListItemIcon>
+            <OpenFileBandicut />
+          </ListItemIcon>
+          <ListItemText primary="用 Bandicut 打开文件" />
+        </MenuItem>
+      );
+    }
     menuItems.push(
       <MenuItem
         key="fileMenuOpenContainingFolder"

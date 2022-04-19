@@ -61,6 +61,7 @@ import {
 } from '-/reducers/settings';
 import { TS } from '-/tagspaces.namespace';
 import { PerspectiveIDs } from '-/perspectives';
+import { execFile } from 'child_process';
 
 export const types = {
   DEVICE_ONLINE: 'APP/DEVICE_ONLINE',
@@ -2002,6 +2003,25 @@ export const actions = {
       const { warningOpeningFilesExternally } = getState().settings;
       PlatformIO.openFile(selectedFile, warningOpeningFilesExternally);
     }
+  },
+  openFileBandicut: (selectedFile?: string) => (
+    dispatch: (actions: Object) => void,
+    getState: () => any
+  ) => {
+    if (selectedFile === undefined) {
+      // eslint-disable-next-line no-param-reassign
+      const fsEntry = getLastSelectedEntry(getState());
+      if (fsEntry === undefined) {
+        return;
+      }
+      if (!fsEntry.isFile) {
+        return;
+      } 
+      selectedFile = fsEntry.path;
+    } 
+    execFile("C:\\Program Files\\Bandicut\\bdcut.exe", [selectedFile], (err, stdout, stderr) => {
+      console.log('openFileBandicut:', err, stdout, stderr);
+    });
   },
   openLink: (url: string) => (
     dispatch: (actions: Object) => void,
