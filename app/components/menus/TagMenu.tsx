@@ -68,6 +68,13 @@ const TagMenu = (props: Props) => {
 
   function showEditTagDialog() {
     props.onClose();
+    if (props.selectedTag) {
+      // props.openSearchPanel();
+      props.setSearchQuery({
+        tagsAND: [props.selectedTag],
+        maxSearchResults: Number.MAX_SAFE_INTEGER
+      });
+    }
     props.showEditTagDialog();
   }
 

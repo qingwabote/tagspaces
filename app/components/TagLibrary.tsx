@@ -50,6 +50,7 @@ import {
 } from '../reducers/settings';
 import {
   actions as AppActions,
+  getDirectoryContent,
   getSelectedEntries,
   isReadOnlyMode
 } from '../reducers/app';
@@ -89,6 +90,8 @@ interface Props {
   ) => void;
   editTagGroup: () => void;
   editTag: () => void;
+  renameFile: (filePath: string, newFilePath: string) => void;
+  directoryContent: Array<TS.FileSystemEntry>;
   deleteTag: (tagTitle: string, parentTagGroupUuid: TS.Uuid) => void;
   showNotification: (
     text: string,
@@ -423,6 +426,8 @@ const TagLibrary = (props: Props) => {
           open={isEditTagDialogOpened}
           onClose={() => setIsEditTagDialogOpened(false)}
           editTag={props.editTag}
+          renameFile = {props.renameFile}
+          directoryContent={props.directoryContent}
           selectedTagGroupEntry={selectedTagGroupEntry}
           selectedTag={selectedTag}
         />
@@ -475,7 +480,8 @@ function mapStateToProps(state) {
     isReadOnlyMode: isReadOnlyMode(state),
     tagGroupCollapsed: state.settings.tagGroupCollapsed,
     locations: getLocations(state),
-    saveTagInLocation: state.settings.saveTagInLocation
+    saveTagInLocation: state.settings.saveTagInLocation,
+    directoryContent: getDirectoryContent(state),
   };
 }
 
@@ -500,7 +506,8 @@ function mapDispatchToProps(dispatch) {
       addTags: TaggingActions.addTags,
       collectTagsFromLocation: TaggingActions.collectTagsFromLocation,
       openURLExternally: AppActions.openURLExternally,
-      showNotification: AppActions.showNotification
+      showNotification: AppActions.showNotification,
+      renameFile: AppActions.renameFile
     },
     dispatch
   );
