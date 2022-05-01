@@ -20,6 +20,7 @@ import React from 'react';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import ShowEntriesWithTagIcon from '@material-ui/icons/SearchOutlined';
+import Copy2clipboardIcon from '@material-ui/icons/FileCopyOutlined';
 import ApplyTagIcon from '@material-ui/icons/LocalOfferOutlined';
 import Edit from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/DeleteForever';
@@ -66,6 +67,13 @@ const TagMenu = (props: Props) => {
     props.onClose();
   }
 
+  function copy2clipboard() {
+    if (props.selectedTag) {
+      navigator.clipboard.writeText(props.selectedTag.title)
+      props.onClose();
+    }
+  }
+
   function showEditTagDialog() {
     props.onClose();
     if (props.selectedTag) {
@@ -100,6 +108,15 @@ const TagMenu = (props: Props) => {
             <ShowEntriesWithTagIcon />
           </ListItemIcon>
           <ListItemText primary={i18n.t('core:showFilesWithThisTag')} />
+        </MenuItem>
+        <MenuItem
+          data-tid="copy2clipboard"
+          onClick={copy2clipboard}
+        >
+          <ListItemIcon>
+            <Copy2clipboardIcon />
+          </ListItemIcon>
+          <ListItemText primary="复制到剪切板" />
         </MenuItem>
         {props.selectedEntries && props.selectedEntries.length > 0 && (
           <MenuItem data-tid="applyTagTID" onClick={applyTag}>
