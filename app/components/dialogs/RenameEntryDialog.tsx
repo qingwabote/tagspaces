@@ -197,6 +197,7 @@ const RenameEntryDialog = (props: Props) => {
             defaultValue={name.current}
             fullWidth={true}
             data-tid="renameEntryDialogInput"
+            multiline
           />
           <FormHelperText>
             {i18n.t('core:' + (isFile ? 'fileNameHelp' : 'directoryNameHelp'))}
