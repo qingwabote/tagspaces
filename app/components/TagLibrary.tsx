@@ -308,6 +308,7 @@ const TagLibrary = (props: Props) => {
     classes,
     allTags,
     showNotification,
+    isReadOnlyMode,
     reduceHeightBy
   } = props;
 
@@ -418,6 +419,7 @@ const TagLibrary = (props: Props) => {
           onClose={() => setTagMenuAnchorEl(null)}
           showEditTagDialog={() => setIsEditTagDialogOpened(true)}
           showDeleteTagDialog={() => setIsDeleteTagDialogOpened(true)}
+          isReadOnlyMode={isReadOnlyMode}
           selectedTag={selectedTag}
         />
       )}
