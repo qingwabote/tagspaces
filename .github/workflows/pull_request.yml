@@ -64,7 +64,7 @@ jobs:
           access-token: ${{ secrets.GITHUB_TOKEN }}
           check-name: Report Desktop App Windows
           working-directory: tests
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         if: failure()
         with:
           name: test-artifacts
@@ -84,7 +84,7 @@ jobs:
       - name: Checkout TagspacesPro
         uses: actions/checkout@v2
         with:
-          ref: TSN759---Fully-migrate-the-electron-and-cordova-platforms-to-new-the-tagspaces-platform
+          ref: develop
           repository: tagspaces/tagspacespro
           token: ${{ secrets.CHECKOUT_TSPRO  }}
           path: extensions/tagspacespro
@@ -120,7 +120,7 @@ jobs:
           access-token: ${{ secrets.GITHUB_TOKEN }}
           check-name: Report Web App Windows
           working-directory: tests
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         if: failure()
         with:
           name: test-artifacts-web

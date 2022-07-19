@@ -65,7 +65,7 @@ import TagGroupTitleDnD from '-/components/TagGroupTitleDnD';
 interface Props {
   classes?: any;
   style?: any;
-  isReadOnlyMode: boolean;
+  isReadOnly: boolean;
   tagTextColor: string;
   tagBackgroundColor: string;
   tagGroups: Array<TS.TagGroup>;
@@ -263,7 +263,7 @@ const TagLibrary = (props: Props) => {
           >
             {tagGroup.children &&
               tagGroup.children.map((tag: TS.Tag, idx) => {
-                if (props.isReadOnlyMode) {
+                if (props.isReadOnly) {
                   return (
                     <TagContainer
                       key={tagGroup.uuid + tag.title}
@@ -308,7 +308,7 @@ const TagLibrary = (props: Props) => {
     classes,
     allTags,
     showNotification,
-    isReadOnlyMode,
+    isReadOnly,
     reduceHeightBy
   } = props;
 
@@ -419,7 +419,7 @@ const TagLibrary = (props: Props) => {
           onClose={() => setTagMenuAnchorEl(null)}
           showEditTagDialog={() => setIsEditTagDialogOpened(true)}
           showDeleteTagDialog={() => setIsDeleteTagDialogOpened(true)}
-          isReadOnlyMode={isReadOnlyMode}
+          isReadOnlyMode={isReadOnly}
           selectedTag={selectedTag}
         />
       )}
@@ -479,7 +479,7 @@ function mapStateToProps(state) {
     tagTextColor: getTagTextColor(state),
     selectedEntries: getSelectedEntries(state),
     allTags: getAllTags(state),
-    isReadOnlyMode: isReadOnlyMode(state),
+    isReadOnly: isReadOnlyMode(state),
     tagGroupCollapsed: state.settings.tagGroupCollapsed,
     locations: getLocations(state),
     saveTagInLocation: state.settings.saveTagInLocation,

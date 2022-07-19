@@ -38,6 +38,7 @@ import {
   platformCreateThumbnailsInWorker,
   platformGetURLforPath,
   platformListDirectoryPromise,
+  platformListMetaDirectoryPromise,
   platformListObjectStoreDir,
   platformSaveFilePromise,
   platformGetPropertiesPromise,
@@ -58,7 +59,8 @@ import {
   platformOpenUrl,
   platformSelectFileDialog,
   platformSelectDirectoryDialog,
-  platformShareFiles
+  platformShareFiles,
+  platformCreateIndex
 } from '@tagspaces/tagspaces-platforms/platform-io';
 import { Pro } from '../pro';
 import { TS } from '-/tagspaces.namespace';
@@ -175,6 +177,9 @@ export default class PlatformFacade {
   ): Promise<Array<any>> =>
     platformListDirectoryPromise(path, mode, ignorePatterns);
 
+  static listMetaDirectoryPromise = (path: string): Promise<Array<any>> =>
+    platformListMetaDirectoryPromise(path);
+
   static listObjectStoreDir = (
     param: Object,
     mode = ['extractThumbPath'],
@@ -207,8 +212,7 @@ export default class PlatformFacade {
     return platformCreateDirectoryPromise(dirPath).then(result => {
       PlatformFacade.deignoreByWatcher(dirPath);
       if (
-        process &&
-        process.platform &&
+        AppConfig.isElectron &&
         AppConfig.isWin &&
         dirPath.endsWith('\\' + AppConfig.metaFolder)
       ) {
@@ -222,17 +226,6 @@ export default class PlatformFacade {
             }
           });
         });
-        // @ts-ignore
-        // return new Promise(resolve => {
-        //   winattr.set(dirPath, { hidden: true }, err => {
-        //     resolve(dirPath);
-        //     if (err) {
-        //       console.warn('Error setting hidden attr. to dir: ' + dirPath);
-        //     } else {
-        //       console.log('Success setting hidden attr. to dir: ' + dirPath);
-        //     }
-        //   });
-        // });
         return true;
       }
       return result;
@@ -451,4 +444,20 @@ export default class PlatformFacade {
   static shareFiles = (files: Array<string>): void => {
     platformShareFiles(files);
   };
+
+  static createIndex(
+    param: any,
+    mode: string[],
+    ignorePatterns: Array<string>,
+    listDirectoryPromise,
+    loadTextFilePromise
+  ) {
+    return platformCreateIndex(
+      param,
+      mode,
+      ignorePatterns,
+      listDirectoryPromise,
+      loadTextFilePromise
+    );
+  }
 }

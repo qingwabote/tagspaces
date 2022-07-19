@@ -232,7 +232,7 @@ function createThumbnailPromise(
     );
     const normalizedFileDirectory = normalizePath(fileDirectory);
     if (normalizedFileDirectory.endsWith(AppConfig.metaFolder)) {
-      resolve(); // prevent creating thumbs in meta/.ts folder
+      resolve(undefined); // prevent creating thumbs in meta/.ts folder
       return true;
     }
     const stats = await PlatformIO.getPropertiesPromise(metaDirectory); // TODO In cordova this check is too expensive for dirs like /.ts (replace it with checkDirExist)
@@ -242,27 +242,25 @@ function createThumbnailPromise(
 
     generateThumbnailPromise(filePath, fileSize, thumbFilePath)
       .then(dataURL => {
-        if (!dataURL) {
-          resolve('');
+        if (dataURL && dataURL.length) {
+          if (dataURL == 'saved') {
+            resolve(thumbFilePath);
+            return true;
+          }
+          saveThumbnailPromise(thumbFilePath, dataURL)
+            .then(() => resolve(thumbFilePath))
+            .catch(err => {
+              console.warn('Thumb saving failed ' + err + ' for ' + filePath);
+              resolve(undefined);
+            });
           return true;
         }
-
-        if (dataURL == 'saved') {
-          resolve(thumbFilePath);
-          return true;
-        }
-
-        saveThumbnailPromise(thumbFilePath, dataURL)
-          .then(() => resolve(thumbFilePath))
-          .catch(err => {
-            console.warn('Thumb saving failed ' + err + ' for ' + filePath);
-            resolve('');
-          });
+        resolve(undefined);
         return true;
       })
       .catch(err => {
         console.warn('Thumb generation failed ' + err + ' for ' + filePath);
-        resolve('');
+        resolve(undefined);
       });
     return true;
   });

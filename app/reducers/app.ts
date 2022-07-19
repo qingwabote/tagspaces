@@ -74,6 +74,7 @@ export const types = {
   LOAD_DIRECTORY_SUCCESS: 'APP/LOAD_DIRECTORY_SUCCESS',
   LOAD_DIRECTORY_FAILURE: 'APP/LOAD_DIRECTORY_FAILURE',
   CLEAR_DIRECTORY_CONTENT: 'APP/CLEAR_DIRECTORY_CONTENT',
+  // LOAD_PAGE_CONTENT: 'APP/LOAD_PAGE_CONTENT',
   SET_SEARCH_RESULTS: 'APP/SET_SEARCH_RESULTS',
   APPEND_SEARCH_RESULTS: 'APP/APPEND_SEARCH_RESULTS',
   OPEN_FILE: 'APP/OPEN_FILE',
@@ -88,6 +89,7 @@ export const types = {
   SET_CURRENLOCATIONID: 'APP/SET_CURRENLOCATIONID',
   SET_CURRENDIRECTORYCOLOR: 'APP/SET_CURRENDIRECTORYCOLOR',
   SET_CURRENDIRECTORYPERSPECTIVE: 'APP/SET_CURRENDIRECTORYPERSPECTIVE',
+  SET_IS_META_LOADED: 'APP/SET_IS_META_LOADED',
   SET_LAST_SELECTED_ENTRY: 'APP/SET_LAST_SELECTED_ENTRY',
   SET_SELECTED_ENTRIES: 'APP/SET_SELECTED_ENTRIES',
   SET_FILEDRAGGED: 'APP/SET_FILEDRAGGED',
@@ -120,6 +122,7 @@ export const types = {
   // REFLECT_UPDATE_SIDECARTAGS: 'APP/REFLECT_UPDATE_SIDECARTAGS',
   // REFLECT_UPDATE_SIDECARMETA: 'APP/REFLECT_UPDATE_SIDECARMETA',
   UPDATE_CURRENTDIR_ENTRY: 'APP/UPDATE_CURRENTDIR_ENTRY',
+  UPDATE_CURRENTDIR_ENTRIES: 'APP/UPDATE_CURRENTDIR_ENTRIES',
   SET_ISLOADING: 'APP/SET_ISLOADING'
 };
 
@@ -271,6 +274,7 @@ export default (state: any = initialState, action: any) => {
       return {
         ...state,
         currentDirectoryEntries: action.directoryContent,
+        // pageEntries: [],
         currentDirectoryColor: action.directoryMeta
           ? action.directoryMeta.color || ''
           : '',
@@ -328,6 +332,12 @@ export default (state: any = initialState, action: any) => {
     case types.SET_CURRENDIRECTORYPERSPECTIVE: {
       if (state.currentDirectoryPerspective !== action.perspective) {
         return { ...state, currentDirectoryPerspective: action.perspective };
+      }
+      return state;
+    }
+    case types.SET_IS_META_LOADED: {
+      if (state.isMetaLoaded !== action.isMetaLoaded) {
+        return { ...state, isMetaLoaded: action.isMetaLoaded };
       }
       return state;
     }
@@ -624,6 +634,22 @@ export default (state: any = initialState, action: any) => {
         })
       };
     } */
+    case types.UPDATE_CURRENTDIR_ENTRIES: {
+      const newDirEntries = [...state.currentDirectoryEntries];
+      for (let i = 0; i < newDirEntries.length; i += 1) {
+        const dirEntry = action.dirEntries.find(
+          entry => entry.path === newDirEntries[i].path
+        );
+        if (dirEntry) {
+          newDirEntries[i] = dirEntry;
+        }
+      }
+
+      return {
+        ...state,
+        currentDirectoryEntries: newDirEntries
+      };
+    }
     case types.UPDATE_CURRENTDIR_ENTRY: {
       return {
         ...state,
@@ -969,9 +995,12 @@ export const actions = {
       password: '1234',
       port: 8080
     }); */
+    /* const mode = PlatformIO.haveObjectStoreSupport()
+      ? []
+      : ['extractThumbPath', 'extractThumbURL']; */
     PlatformIO.listDirectoryPromise(
       directoryPath,
-      ['extractThumbPath', 'extractThumbURL'],
+      [], // mode,
       currentLocation ? currentLocation.ignorePatternPaths : []
     )
       .then(results => {
@@ -999,7 +1028,8 @@ export const actions = {
   },
   loadDirectoryContent: (
     directoryPath: string,
-    generateThumbnails: boolean
+    generateThumbnails: boolean,
+    loadDirMeta: boolean = false
   ) => async (dispatch: (actions: Object) => void, getState: () => any) => {
     // console.debug('loadDirectoryContent:' + directoryPath);
     window.walkCanceled = false;
@@ -1011,28 +1041,34 @@ export const actions = {
     if (selectedEntries.length > 0) {
       dispatch(actions.setSelectedEntries([]));
     }
-    try {
-      const fsEntryMeta = await loadMetaDataPromise(
-        normalizePath(directoryPath) + PlatformIO.getDirSeparator()
-      );
-      // console.debug('Loading meta succeeded for:' + directoryPath);
-      dispatch(
-        actions.loadDirectoryContentInt(
-          directoryPath,
-          generateThumbnails,
-          fsEntryMeta
-        )
-      );
-      /* if (fsEntryMeta.color) { // TODO rethink this states changes are expensive
-          dispatch(actions.setCurrentDirectoryColor(fsEntryMeta.color));
-        }
-        if (fsEntryMeta.perspective) {
-          dispatch(actions.setCurrentDirPerspective(fsEntryMeta.perspective));
-        } */
+    if (loadDirMeta) {
+      try {
+        const fsEntryMeta = await loadMetaDataPromise(
+          normalizePath(directoryPath) + PlatformIO.getDirSeparator()
+        );
+        // console.debug('Loading meta succeeded for:' + directoryPath);
+        dispatch(
+          actions.loadDirectoryContentInt(
+            directoryPath,
+            generateThumbnails,
+            fsEntryMeta
+          )
+        );
+        /* if (fsEntryMeta.color) { // TODO rethink this states changes are expensive
+            dispatch(actions.setCurrentDirectoryColor(fsEntryMeta.color));
+          }
+          if (fsEntryMeta.perspective) {
+            dispatch(actions.setCurrentDirPerspective(fsEntryMeta.perspective));
+          } */
 
-      // return true;
-    } catch (err) {
-      console.debug('Error loading meta of:' + directoryPath + ' ' + err);
+        // return true;
+      } catch (err) {
+        console.debug('Error loading meta of:' + directoryPath + ' ' + err);
+        dispatch(
+          actions.loadDirectoryContentInt(directoryPath, generateThumbnails)
+        );
+      }
+    } else {
       dispatch(
         actions.loadDirectoryContentInt(directoryPath, generateThumbnails)
       );
@@ -1073,6 +1109,7 @@ export const actions = {
         directoryMeta
       )
     );
+    dispatch(actions.setIsMetaLoaded(false));
   },
   loadDirectorySuccessInt: (
     directoryPath: string,
@@ -1148,9 +1185,12 @@ export const actions = {
     type: types.SET_CURRENDIRECTORYPERSPECTIVE,
     perspective
   }),
-  setSelectedEntries: (selectedEntries: Array<Object>) => (
-    dispatch: (actions: Object) => void,
-    getState: () => any
+  setIsMetaLoaded: (isMetaLoaded: boolean) => ({
+    type: types.SET_IS_META_LOADED,
+    isMetaLoaded
+  }),
+  setSelectedEntries: (selectedEntries: Array<TS.FileSystemEntry>) => (
+    dispatch: (action) => void
   ) => {
     // const { openedFiles } = getState().app;
     // skip select other file if its have openedFiles in editMode
@@ -1158,7 +1198,7 @@ export const actions = {
     dispatch(actions.setSelectedEntriesInt(selectedEntries));
     // }
   },
-  setSelectedEntriesInt: (selectedEntries: Array<Object>) => ({
+  setSelectedEntriesInt: (selectedEntries: Array<TS.FileSystemEntry>) => ({
     type: types.SET_SELECTED_ENTRIES,
     selectedEntries
   }),
@@ -1555,9 +1595,9 @@ export const actions = {
   }),
   showNotification: (
     text: string,
-    notificationType: string = 'default',
-    autohide: boolean = true,
-    tid: string = 'notificationTID'
+    notificationType = 'default',
+    autohide = true,
+    tid = 'notificationTID'
   ) => ({
     type: types.SET_NOTIFICATION,
     visible: true,
@@ -1842,6 +1882,10 @@ export const actions = {
     path,
     entry
   }),
+  updateCurrentDirEntries: (dirEntries: TS.FileSystemEntry[]) => ({
+    type: types.UPDATE_CURRENTDIR_ENTRIES,
+    dirEntries
+  }),
   /**
    * @param path
    * @param tags
@@ -1850,7 +1894,7 @@ export const actions = {
   reflectUpdateSidecarTags: (
     path: string,
     tags: Array<TS.Tag>,
-    updateIndex: boolean = true
+    updateIndex = true
   ) => (dispatch: (actions: Object) => void, getState: () => any) => {
     const { openedFiles, selectedEntries } = getState().app;
     /**
@@ -1915,8 +1959,8 @@ export const actions = {
       });
   },
   renameFile: (filePath: string, newFilePath: string) => (
-    dispatch: (actions: Object) => void
-  ) =>
+    dispatch: (action) => void
+  ): Promise<boolean> =>
     PlatformIO.renameFilePromise(filePath, newFilePath)
       .then(result => {
         const newFilePathFromPromise = result[1];
@@ -1969,6 +2013,7 @@ export const actions = {
                 ' with ' +
                 err
             );
+            return false;
           });
         return true;
       })
@@ -1981,7 +2026,8 @@ export const actions = {
             true
           )
         );
-        throw error;
+        return false;
+        // throw error;
       }),
   openFileNatively: (selectedFile?: string) => (
     dispatch: (actions: Object) => void,
@@ -2165,7 +2211,7 @@ export const actions = {
       console.log('Not supported URL format: ' + decodedURI);
     }
   },
-  openURLExternally: (url: string, skipConfirmation: boolean = false) => () => {
+  openURLExternally: (url: string, skipConfirmation = false) => () => {
     if (skipConfirmation) {
       PlatformIO.openUrl(url);
     } else if (
@@ -2205,8 +2251,10 @@ export const actions = {
 
 // Selectors
 export const currentUser = (state: any) => state.app.user;
+export const getIsMetaLoaded = (state: any) => state.app.isMetaLoaded;
 export const getDirectoryContent = (state: any) =>
   state.app.currentDirectoryEntries;
+// export const getPageEntries = (state: any) => state.app.pageEntries;
 export const getCurrentDirectoryFiles = (state: any) =>
   state.app.currentDirectoryFiles;
 export const getCurrentDirectoryDirs = (state: any) =>

@@ -17,13 +17,11 @@
  */
 
 import { v1 as uuidv1 } from 'uuid';
-// @ts-ignore
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import {
   loadIndex,
   enhanceDirectoryIndex,
-  createIndex,
   getMetaIndexFilePath
 } from '@tagspaces/tagspaces-platforms/indexer';
 import { saveAs } from 'file-saver';
@@ -140,6 +138,22 @@ export function enhanceDirectoryContent(
   };
 }
 
+export async function getMetaForEntry(
+  entry: TS.FileSystemEntry,
+  metaFilePath: string
+): Promise<any> {
+  const meta: TS.FileSystemEntryMeta = await loadJSONFile(metaFilePath);
+  if (meta) {
+    const entryEnhanced = enhanceEntry({ ...entry, meta });
+    return { [entry.path]: entryEnhanced };
+  }
+  return Promise.resolve({ [entry.path]: undefined });
+}
+
+/**
+ * TODO enhance only entries from the current page
+ * @param entry
+ */
 export function enhanceEntry(entry: any): TS.FileSystemEntry {
   let fileNameTags = [];
   if (entry.isFile) {
@@ -194,7 +208,7 @@ export function enhanceEntry(entry: any): TS.FileSystemEntry {
   if (sidecarPerspective) {
     enhancedEntry.perspective = sidecarPerspective;
   }
-  // console.log('Enhancing ' + entry.path); console.log(enhancedEntry);
+  // console.log('Enhancing ' + entry.path + ':' + JSON.stringify(enhancedEntry));
   return enhancedEntry;
 }
 
@@ -392,7 +406,7 @@ export function findExtensionPathForId(extensionId: string): string {
 export function findExtensionsForEntry(
   supportedFileTypes: Array<any>,
   entryPath: string,
-  isFile: boolean = true
+  isFile = true
 ): OpenedEntry {
   const fileExtension = extractFileExtension(
     entryPath,
@@ -535,7 +549,7 @@ function persistIndex(param: string | any, directoryIndex: any) {
 
 export function createDirectoryIndex(
   param: string | any,
-  extractText: boolean = false,
+  extractText = false,
   ignorePatterns: Array<string> = [],
   enableWS = true
   // disableIndexing = true,
@@ -578,7 +592,7 @@ export function createDirectoryIndex(
   if (extractText) {
     mode.push('extractTextContent');
   }
-  return createIndex(
+  return PlatformIO.createIndex(
     param,
     mode,
     ignorePatterns,
@@ -760,13 +774,18 @@ export function deleteFilesPromise(filePathList: Array<string>) {
 }
 
 export function renameFilesPromise(renameJobs: Array<Array<string>>) {
-  const fileRenamePromises = [];
+  return Promise.all(
+    renameJobs.map(renameJob =>
+      PlatformIO.renameFilePromise(renameJob[0], renameJob[1])
+    )
+  );
+  /* const fileRenamePromises = [];
   renameJobs.forEach(renameJob => {
     fileRenamePromises.push(
       PlatformIO.renameFilePromise(renameJob[0], renameJob[1])
     );
   });
-  return Promise.all(fileRenamePromises);
+  return Promise.all(fileRenamePromises); */
 }
 
 export function copyFilesPromise(copyJobs: Array<Array<string>>) {
@@ -777,10 +796,7 @@ export function copyFilesPromise(copyJobs: Array<Array<string>>) {
   return Promise.all(ioJobPromises);
 }
 
-export async function loadSubFolders(
-  path: string,
-  loadHidden: boolean = false
-) {
+export async function loadSubFolders(path: string, loadHidden = false) {
   const folderContent = await PlatformIO.listDirectoryPromise(path, []); // 'extractThumbPath']);
   const subfolders = [];
   let i = 0;

@@ -16,29 +16,43 @@
  *
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { connect } from 'react-redux';
 import Typography from '@material-ui/core/Typography';
 import Tooltip from '@material-ui/core/Tooltip';
 import Pagination from '@material-ui/lab/Pagination';
+import { bindActionCreators } from 'redux';
 import i18n from '-/services/i18n';
 import {
+  actions as AppActions,
   getCurrentDirectoryColor,
+  getIsMetaLoaded,
   getSearchResultCount,
   isLoading
 } from '-/reducers/app';
 import EntryIcon from '-/components/EntryIcon';
 import AppConfig from '-/config';
 import { TS } from '-/tagspaces.namespace';
+import { getMetaForEntry } from '-/services/utils-io';
+import {
+  getMetaFileLocationForDir,
+  getMetaFileLocationForFile,
+  getThumbFileLocationForDirectory,
+  getThumbFileLocationForFile
+} from '-/utils/paths';
+import PlatformIO from '-/services/platform-facade';
 
 interface Props {
+  isMetaLoaded: boolean;
+  setIsMetaLoaded: (isLoaded: boolean) => void;
   className: string;
-  style: Object;
+  style;
   theme: any;
   // gridRef: Object;
   directories: Array<TS.FileSystemEntry>;
   showDirectories: boolean;
   files: Array<TS.FileSystemEntry>;
+  // pageEntries: Array<TS.FileSystemEntry>;
   renderCell: (entry: TS.FileSystemEntry, isLast?: boolean) => void;
   currentDirectoryColor: string;
   isAppLoading: boolean;
@@ -49,9 +63,14 @@ interface Props {
   searchResultCount: number;
   onContextMenu: (event: React.MouseEvent<HTMLDivElement>) => void;
   onClick: (event: React.MouseEvent<HTMLDivElement>) => void;
+  updateCurrentDirEntries: (dirEntries: TS.FileSystemEntry[]) => void;
+  // eslint-disable-next-line react/no-unused-prop-types
+  settings; // cache only
+  // eslint-disable-next-line react/no-unused-prop-types
+  selectedEntries; // cache only
 }
 
-const GridPagination = (props: Props) => {
+function GridPagination(props: Props) {
   const {
     className,
     style,
@@ -62,17 +81,56 @@ const GridPagination = (props: Props) => {
     isAppLoading,
     currentDirectoryColor,
     gridPageLimit,
-    currentPage
+    currentPage,
+    files
   } = props;
-  let { files } = props;
   const allFilesCount = files.length;
+  const showPagination = gridPageLimit && files.length > gridPageLimit;
+  const paginationCount = showPagination
+    ? Math.ceil(allFilesCount / gridPageLimit)
+    : 10;
+
   const containerEl = useRef(null);
-  const [page, setPage] = useState(currentPage);
+  // const entriesUpdated = useRef([]);
+  const page = useRef<number>(currentPage);
+  const metaLoadedLock = useRef<boolean>(false);
+  // const [page, setPage] = useState(currentPage);
+
+  let pageFiles;
+  if (showPagination) {
+    const start = (page.current - 1) * gridPageLimit;
+    pageFiles = files.slice(start, start + gridPageLimit);
+  } else {
+    pageFiles = files;
+  }
+  // const [, forceUpdate] = useReducer(x => x + 1, 0);
 
   useEffect(() => {
-    if (page !== currentPage) {
-      setPage(props.currentPage);
+    if (!props.isMetaLoaded && !metaLoadedLock.current) {
+      metaLoadedLock.current = true;
+      PlatformIO.listMetaDirectoryPromise(props.currentDirectoryPath)
+        .then(meta => {
+          metaLoadedLock.current = false;
+          props.setIsMetaLoaded(true);
+          const dirEntriesPromises = getDirEntriesPromises();
+          const fileEntriesPromises = getFileEntriesPromises(meta);
+          const thumbs = getThumbs(meta);
+          updateEntries([
+            ...dirEntriesPromises,
+            ...fileEntriesPromises,
+            ...thumbs
+          ]);
+          return true;
+        })
+        .catch(ex => console.error(ex));
     }
+  }, [page.current, props.isMetaLoaded, files]);
+
+  useEffect(() => {
+    page.current = currentPage;
+    /* if (page !== currentPage) {
+      setPage(props.currentPage);
+    } */
     if (containerEl && containerEl.current) {
       containerEl.current.scrollTop = 0;
     }
@@ -82,24 +140,136 @@ const GridPagination = (props: Props) => {
     props.searchResultCount
   ]);
 
+  const setThumbs = (
+    entry: TS.FileSystemEntry,
+    meta: Array<any>
+  ): TS.FileSystemEntry => {
+    const thumbEntry = { ...entry };
+    let thumbPath = getThumbFileLocationForFile(
+      entry.path,
+      PlatformIO.getDirSeparator(),
+      false
+    );
+    if (meta.some(metaFile => thumbPath.endsWith(metaFile.path))) {
+      thumbEntry.thumbPath = thumbPath;
+      if (PlatformIO.haveObjectStoreSupport()) {
+        if (thumbPath && thumbPath.startsWith('/')) {
+          thumbPath = thumbPath.substring(1);
+        }
+
+        thumbPath = PlatformIO.getURLforPath(thumbPath, 604800);
+        if (thumbPath) {
+          thumbEntry.thumbPath = thumbPath;
+        }
+      }
+    }
+    return thumbEntry;
+  };
+
+  const getThumbs = (meta: Array<any>): Promise<any>[] =>
+    pageFiles.map(entry =>
+      Promise.resolve({ [entry.path]: setThumbs(entry, meta) })
+    );
+
+  const getDirEntriesPromises = (): Promise<any>[] =>
+    directories.map(async entry => {
+      if (entry.name === AppConfig.metaFolder) {
+        return Promise.resolve({ [entry.path]: undefined });
+      }
+      const meta = await PlatformIO.listMetaDirectoryPromise(entry.path);
+      const metaFilePath = getMetaFileLocationForDir(
+        entry.path,
+        PlatformIO.getDirSeparator()
+      );
+      const thumbDirPath = getThumbFileLocationForDirectory(
+        entry.path,
+        PlatformIO.getDirSeparator()
+      );
+      let enhancedEntry;
+      if (meta.some(metaFile => thumbDirPath.endsWith(metaFile.path))) {
+        const thumbPath = PlatformIO.haveObjectStoreSupport()
+          ? PlatformIO.getURLforPath(thumbDirPath)
+          : thumbDirPath;
+        enhancedEntry = { ...entry, thumbPath };
+      }
+      if (
+        meta.some(metaFile => metaFilePath.endsWith(metaFile.path)) &&
+        // !checkEntryExist(entry.path) &&
+        entry.path.indexOf(
+          AppConfig.metaFolder + PlatformIO.getDirSeparator()
+        ) === -1
+      ) {
+        return getMetaForEntry(enhancedEntry || entry, metaFilePath);
+      }
+      return Promise.resolve({ [entry.path]: enhancedEntry });
+    });
+
+  const getFileEntriesPromises = (meta: Array<any>): Promise<any>[] =>
+    pageFiles.map(entry => {
+      const metaFilePath = getMetaFileLocationForFile(
+        entry.path,
+        PlatformIO.getDirSeparator()
+      );
+      if (
+        // check if metaFilePath exist in listMetaDirectory content
+        meta.some(metaFile => metaFilePath.endsWith(metaFile.path)) &&
+        // !checkEntryExist(entry.path) &&
+        entry.path.indexOf(
+          AppConfig.metaFolder + PlatformIO.getDirSeparator()
+        ) === -1
+      ) {
+        return getMetaForEntry(entry, metaFilePath);
+      }
+      return Promise.resolve({ [entry.path]: undefined });
+    });
+
+  const updateEntries = metaPromises => {
+    const catchHandler = error => undefined;
+    Promise.all(metaPromises.map(promise => promise.catch(catchHandler)))
+      .then(entries => {
+        updateCurrentDirEntries(entries); // .filter(entry => entry !== undefined));
+        // entriesUpdated.current = entries;
+        return true;
+      })
+      .catch(err => {
+        console.error('err updateEntries:', err);
+      });
+  };
+
+  const updateCurrentDirEntries = entries => {
+    const entriesEnhanced = [];
+    entries.forEach(entry => {
+      for (const [key, value] of Object.entries(entry)) {
+        if (value) {
+          // !checkEntryExist(key)) {
+          entriesEnhanced.push(value);
+        }
+      }
+    });
+    if (entriesEnhanced.length > 0) {
+      props.updateCurrentDirEntries(entriesEnhanced);
+    }
+  };
+
+  /* const checkEntryExist = path => {
+    const index = pageEntries.findIndex(
+      objUpdated => Object.keys(objUpdated).indexOf(path) > -1
+    );
+    return index > -1;
+  }; */
+
   const handleChange = (event, value) => {
-    setPage(value);
+    // setPage(value);
+    page.current = value;
+    props.setIsMetaLoaded(false);
+    // forceUpdate();
     if (containerEl && containerEl.current) {
       containerEl.current.scrollTop = 0;
     }
   };
 
-  let paginationCount = 10;
-
-  let showPagination = false;
-  if (gridPageLimit && files.length > gridPageLimit) {
-    paginationCount = Math.ceil(files.length / gridPageLimit);
-    const start = (page - 1) * gridPageLimit;
-    files = files.slice(start, start + gridPageLimit);
-    showPagination = true;
-  }
-
   return (
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-noninteractive-element-interactions,jsx-a11y/no-static-element-interactions
     <div
       ref={containerEl}
       onContextMenu={(event: React.MouseEvent<HTMLDivElement>) =>
@@ -120,11 +290,11 @@ const GridPagination = (props: Props) => {
         style={style}
         data-tid="perspectiveGridFileTable"
       >
-        {page === 1 && directories.map(entry => renderCell(entry))}
-        {files.map((entry, index, dArray) =>
+        {page.current === 1 && directories.map(entry => renderCell(entry))}
+        {pageFiles.map((entry, index, dArray) =>
           renderCell(entry, index === dArray.length - 1)
         )}
-        {!isAppLoading && files.length < 1 && directories.length < 1 && (
+        {!isAppLoading && pageFiles.length < 1 && directories.length < 1 && (
           <div style={{ textAlign: 'center' }}>
             <EntryIcon isFile={false} />
             <Typography
@@ -138,7 +308,7 @@ const GridPagination = (props: Props) => {
           </div>
         )}
         {!isAppLoading &&
-          files.length < 1 &&
+          pageFiles.length < 1 &&
           directories.length >= 1 &&
           !showDirectories && (
             <div style={{ textAlign: 'center' }}>
@@ -176,12 +346,12 @@ const GridPagination = (props: Props) => {
               padding: 3
             }}
             count={paginationCount}
-            page={page}
+            page={page.current}
             onChange={handleChange}
           />
         </Tooltip>
       )}
-      {!showPagination && (directories.length > 0 || files.length > 0) && (
+      {!showPagination && (directories.length > 0 || pageFiles.length > 0) && (
         <div style={{ padding: 15, bottom: 10 }}>
           <Typography
             style={{
@@ -198,14 +368,38 @@ const GridPagination = (props: Props) => {
       )}
     </div>
   );
-};
+}
 
 function mapStateToProps(state) {
   return {
     isAppLoading: isLoading(state),
     currentDirectoryColor: getCurrentDirectoryColor(state),
-    searchResultCount: getSearchResultCount(state)
+    searchResultCount: getSearchResultCount(state),
+    // pageEntries: getPageEntries(state),
+    isMetaLoaded: getIsMetaLoaded(state)
   };
 }
 
-export default connect(mapStateToProps)(GridPagination);
+function mapActionCreatorsToProps(dispatch) {
+  return bindActionCreators(
+    {
+      updateCurrentDirEntries: AppActions.updateCurrentDirEntries,
+      setIsMetaLoaded: AppActions.setIsMetaLoaded
+    },
+    dispatch
+  );
+}
+
+const areEqual = (prevProp: Props, nextProp: Props) =>
+  nextProp.isMetaLoaded === prevProp.isMetaLoaded &&
+  JSON.stringify(nextProp.files) === JSON.stringify(prevProp.files) &&
+  JSON.stringify(nextProp.directories) ===
+    JSON.stringify(prevProp.directories) &&
+  JSON.stringify(nextProp.settings) === JSON.stringify(prevProp.settings) &&
+  JSON.stringify(nextProp.selectedEntries) ===
+    JSON.stringify(prevProp.selectedEntries);
+
+export default connect(
+  mapStateToProps,
+  mapActionCreatorsToProps
+)(React.memo(GridPagination, areEqual));

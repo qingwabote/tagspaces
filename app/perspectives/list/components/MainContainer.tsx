@@ -25,8 +25,8 @@ import { actions as TagLibraryActions } from '-/reducers/taglibrary';
 import {
   getSupportedFileTypes,
   getDesktopMode,
-  getKeyBindingObject,
-  isDesktopMode
+  getKeyBindingObject
+  // isDesktopMode
 } from '-/reducers/settings';
 import {
   isObj,
@@ -104,14 +104,12 @@ interface Props {
   ) => void;
   currentLocation: TS.Location;
   locations: Array<TS.Location>;
-  isDesktopMode: boolean;
+  // isDesktopMode: boolean;
   toggleDeleteMultipleEntriesDialog: () => void;
 }
 
 const GridPerspective = (props: Props) => {
-  const settings = JSON.parse(
-    localStorage.getItem(defaultSettings.settingsKey)
-  ); // loading settings
+  let settings = JSON.parse(localStorage.getItem(defaultSettings.settingsKey)); // loading settings
 
   const [mouseX, setMouseX] = useState<number>(undefined);
   const [mouseY, setMouseY] = useState<number>(undefined);
@@ -199,22 +197,20 @@ const GridPerspective = (props: Props) => {
     makeFirstSelectedEntryVisible();
   }, [props.selectedEntries]);
 
+  settings = {
+    showDirectories,
+    showTags,
+    layoutType,
+    orderBy,
+    sortBy,
+    singleClickAction,
+    entrySize,
+    thumbnailMode,
+    gridPageLimit
+  };
+
   useEffect(() => {
-    const settingsObj = {
-      showDirectories,
-      showTags,
-      layoutType,
-      orderBy,
-      sortBy,
-      singleClickAction,
-      entrySize,
-      thumbnailMode,
-      gridPageLimit
-    };
-    localStorage.setItem(
-      defaultSettings.settingsKey,
-      JSON.stringify(settingsObj)
-    );
+    localStorage.setItem(defaultSettings.settingsKey, JSON.stringify(settings));
   }, [
     showDirectories,
     showTags,
@@ -234,9 +230,8 @@ const GridPerspective = (props: Props) => {
         entry => !entry.isFile
       );
       return !selectionContainsDirectories;
-    } else {
-      return false;
     }
+    return false;
   };
 
   const folderOperationsEnabled = () => {
@@ -376,12 +371,7 @@ const GridPerspective = (props: Props) => {
     if (someFileSelected) {
       clearSelection();
     } else {
-      const selectedEntries = [];
-      props.directoryContent.map(entry => {
-        selectedEntries.push(entry);
-        return true;
-      });
-      props.setSelectedEntries(selectedEntries);
+      props.setSelectedEntries(props.directoryContent);
     }
   };
 
@@ -454,7 +444,7 @@ const GridPerspective = (props: Props) => {
     event.stopPropagation();
     setMouseX(event.clientX);
     setMouseY(event.clientY);
-    const { desktopMode, selectedEntries } = props;
+    const { desktopMode } = props;
     const isEntryExist = selectedEntries.some(
       entry => entry.uuid === fsEntry.uuid
     );
@@ -503,12 +493,12 @@ const GridPerspective = (props: Props) => {
   };
 
   const selectEntry = (fsEntry: TS.FileSystemEntry) => {
-    const { setSelectedEntries, selectedEntries } = props;
+    const { setSelectedEntries } = props;
     setSelectedEntries([...selectedEntries, fsEntry]);
   };
 
   const deselectEntry = (fsEntry: TS.FileSystemEntry) => {
-    const { setSelectedEntries, selectedEntries } = props;
+    const { setSelectedEntries } = props;
     const newSelection = selectedEntries.filter(
       data => data.path !== fsEntry.path
     );
@@ -554,22 +544,22 @@ const GridPerspective = (props: Props) => {
       return;
     }
     if (monitor) {
-      const { path, selectedEntries } = monitor.getItem();
+      const mItems = monitor.getItem();
       let arrPath;
-      if (selectedEntries && selectedEntries.length > 0) {
-        const arrSelected = selectedEntries
+      if (mItems.selectedEntries && mItems.selectedEntries.length > 0) {
+        const arrSelected = mItems.selectedEntries
           .map(entry => entry.path)
           // remove target folder selection
           .filter(epath => epath !== item.path);
         if (arrSelected.length > 0) {
           arrPath = arrSelected;
         } else {
-          arrPath = [path];
+          arrPath = [mItems.path];
         }
       } else {
-        arrPath = [path];
+        arrPath = [mItems.path];
       }
-      console.log('Dropped files: ' + path);
+      console.log('Dropped files: ' + mItems.path);
       props.moveFiles(arrPath, item.path);
       clearSelection();
     }
@@ -577,9 +567,9 @@ const GridPerspective = (props: Props) => {
 
   const renderCell = (fsEntry: TS.FileSystemEntry, isLast?: boolean) => {
     const {
-      classes,
-      theme,
-      selectedEntries,
+      // classes,
+      // theme,
+      // selectedEntries,
       addTags,
       addTag,
       supportedFileTypes,
@@ -644,7 +634,6 @@ const GridPerspective = (props: Props) => {
         key={key}
       >
         <TargetMoveFileBox
-          // @ts-ignore
           accepts={[DragItemTypes.FILE]}
           path={fsEntry.path}
           onDrop={handleFileMoveDrop}
@@ -793,6 +782,8 @@ const GridPerspective = (props: Props) => {
           currentDirectoryPath={props.currentDirectoryPath}
           onClick={onClick}
           onContextMenu={onContextMenu}
+          settings={settings}
+          selectedEntries={props.selectedEntries}
         />
       </GlobalHotKeys>
       {isAddRemoveTagsDialogOpened && (
@@ -952,7 +943,7 @@ function mapStateToProps(state) {
     keyBindings: getKeyBindingObject(state),
     currentLocation: getLocation(state, state.app.currentLocationId),
     locations: getLocations(state),
-    isDesktopMode: isDesktopMode(state),
+    // isDesktopMode: isDesktopMode(state),
     isDeleteMultipleEntriesDialogOpened: isDeleteMultipleEntriesDialogOpened(
       state
     )
