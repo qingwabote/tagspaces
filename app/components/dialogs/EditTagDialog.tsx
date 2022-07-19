@@ -84,15 +84,18 @@ const EditTagDialog = (props: Props) => {
       props.selectedTagGroupEntry &&
       props.selectedTag
     ) {
-      const RegExp_escape = function(s:string){
-        return String(s).replace(/[\\^$*+?.()|[\]{}]/g, '\\$&');
-      };
-      const exp = new RegExp("(\\[.*)" + RegExp_escape(props.selectedTag.title) + "(.*\\])");
-      const val = "$1" + title.replace("$", "$$") + "$2";
-      for (const entry of props.directoryContent) {
-        const path = entry.path.replace(exp, val);
-        props.renameFile(entry.path, path);
+      if (title != props.selectedTag.title) {
+        const RegExp_escape = function(s:string){
+          return String(s).replace(/[\\^$*+?.()|[\]{}]/g, '\\$&');
+        };
+        const exp = new RegExp("(\\[.*)" + RegExp_escape(props.selectedTag.title) + "(.*\\])");
+        const val = "$1" + title.replace("$", "$$") + "$2";
+        for (const entry of props.directoryContent) {
+          const path = entry.path.replace(exp, val);
+          props.renameFile(entry.path, path);
+        }
       }
+
       props.editTag(
         {
           ...props.selectedTag,
