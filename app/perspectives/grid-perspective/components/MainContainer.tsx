@@ -92,7 +92,7 @@ interface Props {
   openDirectory: (path: string) => void;
   showInFileManager: (path: string) => void;
   openFileNatively: (path?: string) => void;
-  openFileBandicut: (path: string) => void;
+  openFileWith: (exe:string, path: string) => void;
   openURLExternally: (path: string) => void;
   loadParentDirectoryContent: () => void;
   setSelectedEntries: (selectedEntries: Array<TS.FileSystemEntry>) => void;
@@ -851,7 +851,7 @@ function GridPerspective(props: Props) {
           setGeneratingThumbnails={props.setGeneratingThumbnails}
           openFsEntry={props.openFsEntry}
           openFileNatively={props.openFileNatively}
-          openFileBandicut={props.openFileBandicut}
+          openFileWith={props.openFileWith}
           loadDirectoryContent={props.loadDirectoryContent}
           showInFileManager={props.showInFileManager}
           showNotification={props.showNotification}
@@ -932,7 +932,7 @@ function mapActionCreatorsToProps(dispatch) {
       updateThumbnailUrls: AppActions.updateThumbnailUrls,
       setGeneratingThumbnails: AppActions.setGeneratingThumbnails,
       openFileNatively: AppActions.openFileNatively,
-      openFileBandicut: AppActions.openFileBandicut,
+      openFileWith: AppActions.openFileWith,
       openURLExternally: AppActions.openURLExternally,
       openNextFile: AppActions.openNextFile,
       openPrevFile: AppActions.openPrevFile,

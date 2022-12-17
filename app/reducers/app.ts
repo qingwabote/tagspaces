@@ -2050,7 +2050,7 @@ export const actions = {
       PlatformIO.openFile(selectedFile, warningOpeningFilesExternally);
     }
   },
-  openFileBandicut: (selectedFile?: string) => (
+  openFileWith: (exe:string, selectedFile?: string) => (
     dispatch: (actions: Object) => void,
     getState: () => any
   ) => {
@@ -2065,7 +2065,7 @@ export const actions = {
       } 
       selectedFile = fsEntry.path;
     } 
-    execFile("C:\\Program Files\\Bandicut\\bdcut.exe", [selectedFile], (err, stdout, stderr) => {
+    execFile(exe, [selectedFile], (err, stdout, stderr) => {
       console.log('openFileBandicut:', err, stdout, stderr);
     });
   },

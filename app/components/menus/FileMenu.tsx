@@ -24,7 +24,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import Divider from '@material-ui/core/Divider';
 import OpenFile from '@material-ui/icons/SubdirectoryArrowRight';
 import OpenFileNatively from '@material-ui/icons/Launch';
-import OpenFileBandicut from '@material-ui/icons/Theaters';
+import OpenFileTheaters from '@material-ui/icons/Theaters';
 import OpenParentFolder from '@material-ui/icons/FolderOpen';
 import OpenFolderInternally from '@material-ui/icons/Folder';
 import AddRemoveTags from '@material-ui/icons/Loyalty';
@@ -71,7 +71,7 @@ interface Props {
   openFsEntry: (fsEntry: TS.FileSystemEntry) => void;
   loadDirectoryContent: (path: string, generateThumbnails: boolean) => void;
   openFileNatively: (path: string) => void;
-  openFileBandicut: (path: string) => void;
+  openFileWith: (exe:string, path: string) => void;
   showInFileManager: (path: string) => void;
   showNotification: (
     text: string,
@@ -236,7 +236,14 @@ const FileMenu = (props: Props) => {
   function openFileBandicut() {
     onClose();
     if (props.selectedFilePath) {
-      props.openFileBandicut(props.selectedFilePath);
+      props.openFileWith("C:\\Program Files\\Bandicut\\bdcut.exe", props.selectedFilePath);
+    }
+  }
+
+  function openFileLosslessCut() {
+    onClose();
+    if (props.selectedFilePath) {
+      props.openFileWith("C:\\Program Files\\LosslessCut-win-x64\\LosslessCut.exe", props.selectedFilePath);
     }
   }
 
@@ -325,9 +332,21 @@ const FileMenu = (props: Props) => {
           onClick={openFileBandicut}
         >
           <ListItemIcon>
-            <OpenFileBandicut />
+            <OpenFileTheaters />
           </ListItemIcon>
           <ListItemText primary="用 Bandicut 打开文件" />
+        </MenuItem>
+      );
+      menuItems.push(
+        <MenuItem
+          key="fileMenuOpenFileLosslessCut"
+          data-tid="fileMenuOpenFileLosslessCut"
+          onClick={openFileLosslessCut}
+        >
+          <ListItemIcon>
+            <OpenFileTheaters />
+          </ListItemIcon>
+          <ListItemText primary="用 LosslessCut 打开文件" />
         </MenuItem>
       );
     }
