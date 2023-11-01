@@ -320,36 +320,32 @@ const FileMenu = (props: Props) => {
         <ListItemText primary={i18n.t('core:openFileNatively')} />
       </MenuItem>
     );
-    if (
-      //https://www.bandicam.cn/bandicut-video-cutter/support/
-      ["avi","mp4","mov","m4v","mkv","webm","mpeg","mpg","dat","vob","flv","asf","wmv","ts","tp","trp","mpe","mpv2","mp2v","m2t","m2ts","k3g","divx","wm","wmx","wvx","rm","rmvb","ram","ivf","ogm","vp6","xvd"]
-      .includes(selectedEntries[0].extension)
-      ) {
-      menuItems.push(
-        <MenuItem
-          key="fileMenuOpenFileBandicut"
-          data-tid="fileMenuOpenFileBandicut"
-          onClick={openFileBandicut}
-        >
-          <ListItemIcon>
-            <OpenFileTheaters />
-          </ListItemIcon>
-          <ListItemText primary="用 Bandicut 打开文件" />
-        </MenuItem>
-      );
-      menuItems.push(
-        <MenuItem
-          key="fileMenuOpenFileLosslessCut"
-          data-tid="fileMenuOpenFileLosslessCut"
-          onClick={openFileLosslessCut}
-        >
-          <ListItemIcon>
-            <OpenFileTheaters />
-          </ListItemIcon>
-          <ListItemText primary="用 LosslessCut 打开文件" />
-        </MenuItem>
-      );
-    }
+      
+    menuItems.push(
+      <MenuItem
+        key="fileMenuOpenFileBandicut"
+        data-tid="fileMenuOpenFileBandicut"
+        onClick={openFileBandicut}
+      >
+        <ListItemIcon>
+          <OpenFileTheaters />
+        </ListItemIcon>
+        <ListItemText primary="用 Bandicut 打开文件" />
+      </MenuItem>
+    );
+    menuItems.push(
+      <MenuItem
+        key="fileMenuOpenFileLosslessCut"
+        data-tid="fileMenuOpenFileLosslessCut"
+        onClick={openFileLosslessCut}
+      >
+        <ListItemIcon>
+          <OpenFileTheaters />
+        </ListItemIcon>
+        <ListItemText primary="用 LosslessCut 打开文件" />
+      </MenuItem>
+    );
+    
     menuItems.push(
       <MenuItem
         key="fileMenuOpenContainingFolder"
